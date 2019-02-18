@@ -17,6 +17,8 @@ class Auth {
     this.isAuthenticated = this.isAuthenticated.bind(this);
     this.signIn = this.signIn.bind(this);
     this.signOut = this.signOut.bind(this);
+
+    //this.restoreLocalStorage();
   }
 
   getProfile() {
@@ -42,20 +44,51 @@ class Auth {
         if (!authResult || !authResult.idToken) {
           return reject(err);
         }
-        this.idToken = authResult.idToken;
-        this.profile = authResult.idTokenPayload;
-        // set the time that the id token will expire at
-        this.expiresAt = authResult.idTokenPayload.exp * 1000;
+        this.setSession(authResult);
+       
+        //localStorage.setItem('authResult', JSON.stringify({idToken: authResult.idToken,profile: authResult.profile, expiresAt: this.expiresAt }));
         resolve();
       });
     })
   }
+  setSession(authResult){
+    this.idToken = authResult.idToken;
+    this.profile = authResult.idTokenPayload;
+    // set the time that the id token will expire at
+    this.expiresAt = authResult.idTokenPayload.exp * 1000;
+  }
+
+  silentAuth() {
+    return new Promise((resolve, reject) => {
+      this.auth0.checkSession({}, (err, authResult) => {
+        if (err) return reject(err);
+        this.setSession(authResult);
+        resolve();
+      });
+    });
+  }
+
+  // restoreLocalStorage(){
+    
+  //   var x = JSON.parse(localStorage.getItem('authResult'));
+  //   console.log('%c restoreLocalStorage called','background-color:red;');
+  //   console.log(x);
+  //   if(x){
+  //     this.idToken = x.idToken;
+  //     this.profile = x.profile;
+  //     debugger;
+  //     // set the time that the id token will expire at
+  //     this.expiresAt = x.expiresAt;
+
+      
+  //   }
+  // }
 
   signOut() {
-    // clear id token, profile, and expiration
-    this.idToken = null;
-    this.profile = null;
-    this.expiresAt = null;
+    this.auth0.logout({
+      returnTo: 'http://localhost:3000',
+      clientID: 'JoroSWgijQi8cTn2mjCMrLTCUCWXrjI8',
+    });
   }
 }
 
